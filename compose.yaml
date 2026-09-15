@@ -1,0 +1,34 @@
+services:
+  calculator:
+    build:
+      context: .
+      target: calculator
+    ports:
+      - "${HTTP_PORT:-8080}:8080"
+    environment:
+      HTTP_ADDR: ":8080"
+      CALC_QUEUE_SIZE: "${CALC_QUEUE_SIZE:-4096}"
+      LOG_INTERVAL: "${LOG_INTERVAL:-5s}"
+      SHUTDOWN_TIMEOUT: "${SHUTDOWN_TIMEOUT:-30s}"
+    # CALC_WORKERS is absent by default: the application uses runtime.NumCPU().
+    stop_signal: SIGINT
+    stop_grace_period: 2m
+    healthcheck:
+      test: ["CMD", "healthcheck"]
+      interval: 2s
+      timeout: 3s
+      start_period: 3s
+      retries: 10
+  generator:
+    build:
+      context: .
+      target: generator
+    depends_on:
+      calculator:
+        condition: service_healthy
+    environment:
+      CALCULATOR_URL: "http://calculator:8080"
+      GENERATOR_WORKERS: "${GENERATOR_WORKERS:-8}"
+      HTTP_TIMEOUT: "${HTTP_TIMEOUT:-10s}"
+    stop_signal: SIGINT
+    stop_grace_period: 15s

@@ -1,0 +1,6 @@
+.git
+.idea
+native/rust/target
+bin
+.env
+*.log
